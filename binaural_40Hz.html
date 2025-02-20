@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound Wave Player</title>
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h2>Sound Wave Player</h2>
+    <label for="soundType">Select Sound Type:</label>
+    <select id="soundType" onchange="toggleFrequencyInput()">
+        <option value="binaural">Binaural Beat</option>
+        <option value="whiteNoise">White Noise</option>
+        <option value="pinkNoise">Pink Noise</option>
+        <option value="brownNoise">Brown Noise</option>
+        <option value="custom">Custom Frequency</option>
+    </select>
+    <br>
+    <label for="waveType">Select Wave Type:</label>
+    <select id="waveType">
+        <option value="sine">Sine</option>
+        <option value="square">Square</option>
+        <option value="sawtooth">Sawtooth</option>
+        <option value="triangle">Triangle</option>
+    </select>
+    <br>
+    <div id="binauralOptions">
+        <label for="effectType">Select Effect Type (for Binaural Beats):</label>
+        <select id="effectType">
+            <option value="delta">Delta (0.5-4 Hz) - Deep Sleep, Relaxation</option>
+            <option value="theta">Theta (4-8 Hz) - Meditation, Creativity</option>
+            <option value="alpha">Alpha (8-14 Hz) - Relaxed Focus, Learning</option>
+            <option value="beta">Beta (14-30 Hz) - Active Thinking, Problem Solving</option>
+            <option value="gamma">Gamma (30-100 Hz) - Cognitive Enhancement</option>
+        </select>
+    </div>
+    <div id="customFrequencyOptions" style="display: none;">
+        <label for="customFreq">Enter Frequency (Hz):</label>
+        <input type="number" id="customFreq" min="20" max="20000" value="440">
+    </div>
+    <br>
+    <button onclick="startSound()">Play</button>
+    <button onclick="stopSound()">Stop</button>
+    <br>
+    <script>
+        let audioContext, oscillator;
+
+        function toggleFrequencyInput() {
+            let soundType = document.getElementById("soundType").value;
+            document.getElementById("binauralOptions").style.display = (soundType === "binaural") ? "block" : "none";
+            document.getElementById("customFrequencyOptions").style.display = (soundType === "custom") ? "block" : "none";
+        }
+
+        function startSound() {
+            stopSound();
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            let soundType = document.getElementById("soundType").value;
+            let waveType = document.getElementById("waveType").value;
+
+            if (soundType === "binaural") {
+                let effectType = document.getElementById("effectType").value;
+                playBinauralBeat(waveType, effectType);
+            } else if (soundType === "custom") {
+                let customFreq = parseFloat(document.getElementById("customFreq").value);
+                playCustomFrequency(customFreq, waveType);
+            }
+        }
+
+        function playBinauralBeat(waveType, effectType) {
+            let baseFreq = 200;
+            let beatFrequencies = { delta: 2, theta: 6, alpha: 10, beta: 20, gamma: 40 };
+            let beatFreq = beatFrequencies[effectType] || 10;
+
+            let leftOscillator = audioContext.createOscillator();
+            let rightOscillator = audioContext.createOscillator();
+            let leftGain = audioContext.createGain();
+            let rightGain = audioContext.createGain();
+
+            leftOscillator.type = waveType;
+            rightOscillator.type = waveType;
+            leftOscillator.frequency.value = baseFreq;
+            rightOscillator.frequency.value = baseFreq + beatFreq;
+
+            leftGain.gain.value = 0.5;
+            rightGain.gain.value = 0.5;
+
+            leftOscillator.connect(leftGain);
+            rightOscillator.connect(rightGain);
+            leftGain.connect(audioContext.destination);
+            rightGain.connect(audioContext.destination);
+
+            leftOscillator.start();
+            rightOscillator.start();
+        }
+
+        function playCustomFrequency(freq, waveType) {
+            oscillator = audioContext.createOscillator();
+            oscillator.type = waveType;
+            oscillator.frequency.value = freq;
+            oscillator.connect(audioContext.destination);
+            oscillator.start();
+        }
+
+        function stopSound() {
+            if (audioContext) {
+                audioContext.close();
+            }
+        }
+    </script>
+</body>
+</html>
